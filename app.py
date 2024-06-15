@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 import pickle
 import io
 
+st.set_page_config(
+    page_title="Regression models | www.anodra.uz",
+    page_icon="🚀",
+    layout="centered",  # or "wide"
+    initial_sidebar_state="auto"  # or "expanded" or "collapsed"
+)
 # DataFrame haqida ma'lumot olish funksiyasi
 def get_df_info(df):
     buffer = io.StringIO()
@@ -34,6 +40,8 @@ def handle_missing_values(df, strategy):
 
 # Streamlit app
 st.title('Regressiya model quruvchi')
+
+
 
 # Sidebarni yaratish
 st.sidebar.title("Regression model quruvchi")
