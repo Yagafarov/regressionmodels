@@ -1,0 +1,38 @@
+# Python specific
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.egg-info/*
+*.dist-info/
+*.dist-info/*
+*.wheel
+
+# Environment variables
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# macOS specific
+.DS_Store
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Streamlit specific
+.streamlit/secrets.toml
+
+# VSCode specific
+.vscode/
