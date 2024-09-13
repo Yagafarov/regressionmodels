@@ -5,19 +5,19 @@ from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.tree import DecisionTreeRegressor
-
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import pickle
 import io
 
 st.set_page_config(
-    page_title="RegMod | www.anodra.uz",
+    page_title="Regression Model Builder | www.anodra.uz",
     page_icon="🚀",
-    layout="centered",  # or "wide"
-    initial_sidebar_state="auto"  # or "expanded" or "collapsed"
+    layout="centered", 
+    initial_sidebar_state="auto"  
 )
-# DataFrame haqida ma'lumot olish funksiyasi
+
+
 def get_df_info(df):
     buffer = io.StringIO()
     df.info(buf=buffer)
@@ -26,30 +26,28 @@ def get_df_info(df):
     col_info_df = pd.DataFrame(col_info, columns=["#", "Columns", "Non-Null Count", "Dtype", "Details"])
     return col_info_df
 
-# Yo'q bo'lib ketgan qiymatlarni to'ldirish funksiyasi
+
 def handle_missing_values(df, strategy):
-    if strategy == "Discard missing values":
+    if strategy == "Drop missing values":
         df = df.dropna()
-    elif strategy == "Fill with average value":
+    elif strategy == "Fill with mean value":
         df = df.fillna(df.mean())
-    elif strategy == "Fill with the median value":
+    elif strategy == "Fill with median value":
         df = df.fillna(df.median())
-    elif strategy == "Fill with the moda value":
+    elif strategy == "Fill with mode value":
         df = df.fillna(df.mode().iloc[0])
     return df
 
-# Streamlit app
-st.title('Regression model builder')
+
+st.title('Regression Model Builder')
 
 
-
-# Sidebarni yaratish
-st.sidebar.title("Regression model builder")
+st.sidebar.title("Regression Model Builder")
 st.sidebar.markdown("<h4 style='color: blue;'>Creator: <a href=`https://t.me/yagafarov`>Dinmukhammad Yagafarov</a></h4>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
-# Ma'lumotlarni yuklash
-uploaded_file = st.sidebar.file_uploader("Upload data (excel or csv)", type=["csv", "xlsx"])
+
+uploaded_file = st.sidebar.file_uploader("Upload data (CSV or Excel)", type=["csv", "xlsx"])
 if uploaded_file is not None:
     file_type = uploaded_file.name.split('.')[-1]
     if file_type == 'csv':
@@ -57,51 +55,48 @@ if uploaded_file is not None:
     elif file_type == 'xlsx':
         df = pd.read_excel(uploaded_file)
 
-    st.write("Uploaded data:")
+    st.write("Uploaded Data:")
     st.dataframe(df.head())
 
-    st.write("About data:")
+    st.write("Data Information:")
     df_info = get_df_info(df)
     st.table(df_info)
 
-    # Yo'q bo'lib ketgan qiymatlarni to'ldirish
-    missing_value_strategy = st.sidebar.selectbox("How to fill in missing values?", 
-                                          ["Drop missing values", "Fill with mean value", "Fill with median value", "Fill with mode value"])
+
+    missing_value_strategy = st.sidebar.selectbox("How to handle missing values?", 
+                                                  ["Drop missing values", "Fill with mean value", "Fill with median value", "Fill with mode value"])
     df = handle_missing_values(df, missing_value_strategy)
 
-    # Keraksiz ustunlarni olib tashlash
-    columns_to_drop = st.sidebar.multiselect("Select the columns to delete", df.columns)
+
+    columns_to_drop = st.sidebar.multiselect("Select columns to delete", df.columns)
     if columns_to_drop:
         df = df.drop(columns=columns_to_drop)
-        st.write("Updated information:")
+        st.write("Updated Data:")
         st.dataframe(df.head())
 
-    st.write("Updated information:")
-    st.dataframe(df.head())
-
 if 'df' in locals() and not df.empty:
-    # Kodlash
-    selected_columns = st.sidebar.multiselect("Select the columns to convert", df.columns)
+
+    selected_columns = st.sidebar.multiselect("Select columns to convert", df.columns)
     for column in selected_columns:
         if df[column].dtype == object:
             unique_values = df[column].unique()
             value_mapping = {val: idx for idx, val in enumerate(unique_values)}
             df[column] = df[column].map(value_mapping)
 
-    # Bashorat qilinuvchi ustunni tanlash
-    target_column = st.sidebar.selectbox("Select the predicted column", df.columns)
 
-    # Model tanlash
-    model_type = st.sidebar.selectbox("Select the model type", ["Linear Regression", "Ridge Regression", "Lasso Regression", "Random Forest Regression","Decision Tree Regression"])
+    target_column = st.sidebar.selectbox("Select the target column for prediction", df.columns)
 
-    # Ma'lumotlarni trenlash va test qismiga bo'lib bo'linishi
+
+    model_type = st.sidebar.selectbox("Select model type", ["Linear Regression", "Ridge Regression", "Lasso Regression", "Random Forest Regression", "Decision Tree Regression"])
+
+
     train_set, test_set = train_test_split(df, test_size=0.15, random_state=28)
     x_train = train_set.drop(target_column, axis=1).values
     y_train = train_set[target_column].values
     x_test = test_set.drop(target_column, axis=1).values
     y_test = test_set[target_column].values
 
-    # Tanlangan modelni trenlash
+
     if model_type == "Linear Regression":
         model = linear_model.LinearRegression()
     elif model_type == "Ridge Regression":
@@ -111,7 +106,7 @@ if 'df' in locals() and not df.empty:
         alpha = st.sidebar.slider("Alpha", 0.01, 10.0, 1.0)
         model = linear_model.Lasso(alpha=alpha)
     elif model_type == "Random Forest Regression":
-        n_estimators = st.sidebar.slider("Estimatorlar soni", 10, 500, 100)
+        n_estimators = st.sidebar.slider("Number of estimators", 10, 500, 100)
         model = RandomForestRegressor(n_estimators=n_estimators, random_state=28)
     elif model_type == "Decision Tree Regression":
         max_depth = st.sidebar.slider("Max depth", 1, 50, 10)
@@ -119,10 +114,10 @@ if 'df' in locals() and not df.empty:
 
     model.fit(x_train, y_train)
 
-    # Bashorat qilinuvchi ustunni aniqlash
+
     y_predict = model.predict(x_test)
 
-    # Modelni baholash
+
     MAE = mean_absolute_error(y_test, y_predict)
     RMSE = np.sqrt(mean_squared_error(y_test, y_predict))
     r2 = r2_score(y_test, y_predict)
@@ -132,7 +127,7 @@ if 'df' in locals() and not df.empty:
     st.write(f"RMSE: {RMSE}")
     st.write(f"R^2: {r2}")
 
-    # Natijalarni chizish
+
     y_train_p = model.predict(x_train)
     y_test_p = model.predict(x_test)
 
@@ -143,15 +138,39 @@ if 'df' in locals() and not df.empty:
 
     ax.set_xlabel('Actual values')
     ax.set_ylabel('Predicted values')
-    ax.set_title("Prediction line for selected model")
+    ax.set_title("Prediction Line for Selected Model")
     ax.legend()
     ax.grid(True)
     st.pyplot(fig)
 
-    # Modelni diskga saqlash
-    filename = 'model.pkl'
-    pickle.dump(model, open(filename, 'wb'))
+    
 
-    # Modelni yuklab olish tugmasi
-    with open(filename, 'rb') as f:
-        st.download_button('Download the model(.pkl)', f, file_name=filename)
+
+
+    st.write("### Test the model with new data")
+    test_data = []
+    for col in df.drop(columns=[target_column]).columns:
+        user_input = st.number_input(f"Enter value for {col}", value=0.0)
+        test_data.append(user_input)
+    
+    if st.button('Predict'):
+        prediction = model.predict([test_data])
+        st.write(f"The predicted value is: {prediction[0]}")
+
+
+        user_test_MAE = mean_absolute_error([prediction[0]], [y_test.mean()]) 
+        user_test_r2 = r2_score([prediction[0]], [y_test.mean()])
+
+        st.write(f"Test MAE for the entered data: {user_test_MAE}")
+        st.write(f"Test R² for the entered data: {user_test_r2}")
+
+    
+
+    if st.button('Save and Download the Model'):
+
+        filename = 'model.pkl'
+        with open(filename, 'wb') as file:
+            pickle.dump(model, file)
+        
+        with open(filename, 'rb') as f:
+            st.download_button('Download the model (.pkl)', f, file_name=filename)
