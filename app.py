@@ -12,7 +12,7 @@ import pickle
 import io
 
 st.set_page_config(
-    page_title="Regression models | www.anodra.uz",
+    page_title="RegMod | www.anodra.uz",
     page_icon="🚀",
     layout="centered",  # or "wide"
     initial_sidebar_state="auto"  # or "expanded" or "collapsed"
@@ -23,33 +23,33 @@ def get_df_info(df):
     df.info(buf=buffer)
     s = buffer.getvalue().split('\n')
     col_info = [x.split(maxsplit=4) for x in s[3:-2]]
-    col_info_df = pd.DataFrame(col_info, columns=["#", "Ustun", "Non-Null Count", "Dtype", "Details"])
+    col_info_df = pd.DataFrame(col_info, columns=["#", "Columns", "Non-Null Count", "Dtype", "Details"])
     return col_info_df
 
 # Yo'q bo'lib ketgan qiymatlarni to'ldirish funksiyasi
 def handle_missing_values(df, strategy):
-    if strategy == "Yo'q qiymatlarni tashlab yuborish":
+    if strategy == "Discard missing values":
         df = df.dropna()
-    elif strategy == "O'rtacha qiymat bilan to'ldirish":
+    elif strategy == "Fill with average value":
         df = df.fillna(df.mean())
-    elif strategy == "Mediana qiymat bilan to'ldirish":
+    elif strategy == "Fill with the median value":
         df = df.fillna(df.median())
-    elif strategy == "Moda qiymat bilan to'ldirish":
+    elif strategy == "Fill with the moda value":
         df = df.fillna(df.mode().iloc[0])
     return df
 
 # Streamlit app
-st.title('Regressiya model quruvchi')
+st.title('Regression model builder')
 
 
 
 # Sidebarni yaratish
-st.sidebar.title("Regression model quruvchi")
-st.sidebar.markdown("<h4 style='color: blue;'>Yaratuvchi: <a href=`https://t.me/yagafarov`>Dinmuhammad Yagafarov</a></h4>", unsafe_allow_html=True)
+st.sidebar.title("Regression model builder")
+st.sidebar.markdown("<h4 style='color: blue;'>Creator: <a href=`https://t.me/yagafarov`>Dinmukhammad Yagafarov</a></h4>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
 # Ma'lumotlarni yuklash
-uploaded_file = st.sidebar.file_uploader("Ma'lumotlarni yuklang", type=["csv", "xlsx"])
+uploaded_file = st.sidebar.file_uploader("Upload data (excel or csv)", type=["csv", "xlsx"])
 if uploaded_file is not None:
     file_type = uploaded_file.name.split('.')[-1]
     if file_type == 'csv':
@@ -57,31 +57,31 @@ if uploaded_file is not None:
     elif file_type == 'xlsx':
         df = pd.read_excel(uploaded_file)
 
-    st.write("Yuklangan ma'lumotlar:")
+    st.write("Uploaded data:")
     st.dataframe(df.head())
 
-    st.write("Ma'lumotlar haqida:")
+    st.write("About data:")
     df_info = get_df_info(df)
     st.table(df_info)
 
     # Yo'q bo'lib ketgan qiymatlarni to'ldirish
-    missing_value_strategy = st.sidebar.selectbox("Yo'q bo'lib ketgan qiymatlarni qanday to'ldirish kerak?", 
-                                          ["Yo'q qiymatlarni tashlab yuborish", "O'rtacha qiymat bilan to'ldirish", "Mediana qiymat bilan to'ldirish", "Moda qiymat bilan to'ldirish"])
+    missing_value_strategy = st.sidebar.selectbox("How to fill in missing values?", 
+                                          ["Drop missing values", "Fill with mean value", "Fill with median value", "Fill with mode value"])
     df = handle_missing_values(df, missing_value_strategy)
 
     # Keraksiz ustunlarni olib tashlash
-    columns_to_drop = st.sidebar.multiselect("O'chiriladigan ustunlarni tanlang", df.columns)
+    columns_to_drop = st.sidebar.multiselect("Select the columns to delete", df.columns)
     if columns_to_drop:
         df = df.drop(columns=columns_to_drop)
-        st.write("Yangilangan ma'lumotlar:")
+        st.write("Updated information:")
         st.dataframe(df.head())
 
-    st.write("Yangilangan ma'lumotlar:")
+    st.write("Updated information:")
     st.dataframe(df.head())
 
 if 'df' in locals() and not df.empty:
     # Kodlash
-    selected_columns = st.sidebar.multiselect("Konvert qilinadigan ustunlarni tanlang", df.columns)
+    selected_columns = st.sidebar.multiselect("Select the columns to convert", df.columns)
     for column in selected_columns:
         if df[column].dtype == object:
             unique_values = df[column].unique()
@@ -89,10 +89,10 @@ if 'df' in locals() and not df.empty:
             df[column] = df[column].map(value_mapping)
 
     # Bashorat qilinuvchi ustunni tanlash
-    target_column = st.sidebar.selectbox("Bashorat qilinuvchi ustunni tanlang", df.columns)
+    target_column = st.sidebar.selectbox("Select the predicted column", df.columns)
 
     # Model tanlash
-    model_type = st.sidebar.selectbox("Model turini tanlang", ["Linear Regression", "Ridge Regression", "Lasso Regression", "Random Forest Regression","Decision Tree Regression"])
+    model_type = st.sidebar.selectbox("Select the model type", ["Linear Regression", "Ridge Regression", "Lasso Regression", "Random Forest Regression","Decision Tree Regression"])
 
     # Ma'lumotlarni trenlash va test qismiga bo'lib bo'linishi
     train_set, test_set = train_test_split(df, test_size=0.15, random_state=28)
@@ -127,7 +127,7 @@ if 'df' in locals() and not df.empty:
     RMSE = np.sqrt(mean_squared_error(y_test, y_predict))
     r2 = r2_score(y_test, y_predict)
 
-    st.write(f"Koeffitsiyentlar: {model.coef_ if hasattr(model, 'coef_') else 'N/A (Random Forest)'}")
+    st.write(f"Coefficients: {model.coef_ if hasattr(model, 'coef_') else 'N/A (Random Forest)'}")
     st.write(f"MAE: {MAE}")
     st.write(f"RMSE: {RMSE}")
     st.write(f"R^2: {r2}")
@@ -137,13 +137,13 @@ if 'df' in locals() and not df.empty:
     y_test_p = model.predict(x_test)
 
     fig, ax = plt.subplots()
-    ax.scatter(y_train, y_train_p, color='blue', label="O'quv ma'lumotlari", alpha=0.6)
-    ax.scatter(y_test, y_test_p, color='red', label="Test ma'lumotlari", alpha=0.6)
-    ax.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], color='green', linestyle='--', linewidth=2, label="Bashorat chizigi")
+    ax.scatter(y_train, y_train_p, color='blue', label="Train data", alpha=0.6)
+    ax.scatter(y_test, y_test_p, color='red', label="Test data", alpha=0.6)
+    ax.plot([y_train.min(), y_train.max()], [y_train.min(), y_train.max()], color='green', linestyle='--', linewidth=2, label="Prediction line")
 
-    ax.set_xlabel('Haqiqiy qiymatlar')
-    ax.set_ylabel('Bashorat qiymatlar')
-    ax.set_title("Tanlangan model uchun bashorat chizigi")
+    ax.set_xlabel('Actual values')
+    ax.set_ylabel('Predicted values')
+    ax.set_title("Prediction line for selected model")
     ax.legend()
     ax.grid(True)
     st.pyplot(fig)
@@ -154,4 +154,4 @@ if 'df' in locals() and not df.empty:
 
     # Modelni yuklab olish tugmasi
     with open(filename, 'rb') as f:
-        st.download_button('Modelni yuklab oling', f, file_name=filename)
+        st.download_button('Download the model(.pkl)', f, file_name=filename)
