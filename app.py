@@ -51,7 +51,8 @@ uploaded_file = st.sidebar.file_uploader("Upload data (CSV or Excel)", type=["cs
 if uploaded_file is not None:
     file_type = uploaded_file.name.split('.')[-1]
     if file_type == 'csv':
-        df = pd.read_csv(uploaded_file)
+        separator =st.selectbox("Select Separator",[",",";","t"])
+        df = pd.read_csv(uploaded_file,sep=separator)
     elif file_type == 'xlsx':
         df = pd.read_excel(uploaded_file)
 
